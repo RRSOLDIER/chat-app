@@ -21,10 +21,10 @@ def register_view(request):
 
 def login_view(request):
     if request.method=='POST':
-        email=request.POST['email']
+        username=request.POST['username']
         password=request.POST['password']
 
-        user=authenticate(request, email=email, password=password)
+        user=authenticate(request, username=username, password=password)
 
         if user:
             login(request,user)

@@ -6,5 +6,5 @@ class User(AbstractUser):
     is_online = models.BooleanField(default=False)
     last_seen=models.DateTimeField(null=True, blank=True)
 
-    USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = ['username']
+    USERNAME_FIELD = 'username'
+    REQUIRED_FIELDS = ['email']
