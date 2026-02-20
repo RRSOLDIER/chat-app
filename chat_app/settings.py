@@ -27,6 +27,10 @@ DEBUG = False
 
 ALLOWED_HOSTS = ['*']
 
+CSRF_TRUSTED_ORIGINS = [
+    "https://chat-app-qs7n.onrender.com",
+]
+
 
 # Application definition
 
