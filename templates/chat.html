@@ -110,8 +110,10 @@
 const chatBox = document.getElementById("chat-box");
 const typingDiv = document.getElementById("typing-indicator");
 
+const protocol = window.location.protocol === "https:" ? "wss://" : "ws://";
+
 const socket = new WebSocket(
-    'ws://' + window.location.host + '/ws/chat/{{ room_name }}/'
+    protocol + window.location.host + '/ws/chat/{{ room_name }}/'
 );
 
 

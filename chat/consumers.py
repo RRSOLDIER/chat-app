@@ -89,6 +89,7 @@ class OnlineStatusConsumer(AsyncWebsocketConsumer):
         await self.send(text_data=json.dumps(event))
 
 
+
 class ChatConsumer(AsyncWebsocketConsumer):
 
     async def connect(self):
@@ -117,86 +118,77 @@ class ChatConsumer(AsyncWebsocketConsumer):
     async def receive(self, text_data):
 
         data = json.loads(text_data)
-
-        message = data.get('message')
-        receiver_id = data.get('receiver_id')
-        typing = data.get('typing', False)
-        delete_id = data.get('delete_id')
-
         sender = self.scope["user"]
 
+        # ✅ TYPING INDICATOR
+        if data.get("typing"):
 
-        if typing:
             await self.channel_layer.group_send(
                 self.room_group_name,
                 {
-                    'type': 'typing_status',
-                    'sender': sender.username,
+                    "type": "typing_event",
+                    "sender": sender.username
                 }
             )
             return
 
+        # ✅ DELETE MESSAGE
+        if data.get("delete_id"):
 
-        if delete_id:
+            delete_id = data.get("delete_id")
+
             await self.delete_message(delete_id)
 
             await self.channel_layer.group_send(
                 self.room_group_name,
                 {
-                    'type': 'message_deleted',
-                    'delete_id': delete_id,
+                    "type": "delete_event",
+                    "delete_id": delete_id
                 }
             )
             return
 
+        # ✅ NORMAL MESSAGE
+        message = data.get("message")
+        receiver_id = data.get("receiver_id")
 
         if not message:
             return
 
         receiver = await self.get_receiver(receiver_id)
 
-        if not receiver:
-            return
-
-        saved_msg = await self.save_message(sender, receiver, message)
+        msg_obj = await self.save_message(sender, receiver, message)
 
         await self.channel_layer.group_send(
             self.room_group_name,
             {
-                'type': 'chat_message',
-                'message': message,
-                'sender': sender.username,
-                'message_id': saved_msg.id,
+                "type": "chat_message",
+                "message": message,
+                "sender": sender.username,
+                "message_id": msg_obj.id
             }
         )
 
     async def chat_message(self, event):
 
+        await self.send(text_data=json.dumps(event))
+
+    async def typing_event(self, event):
+
         await self.send(text_data=json.dumps({
-            'message': event['message'],
-            'sender': event['sender'],
-            'message_id': event['message_id'],
+            "typing": True,
+            "sender": event["sender"]
         }))
 
-    async def typing_status(self, event):
+    async def delete_event(self, event):
 
         await self.send(text_data=json.dumps({
-            'typing': True,
-            'sender': event['sender']
-        }))
-
-    async def message_deleted(self, event):
-
-        await self.send(text_data=json.dumps({
-            'delete_id': event['delete_id']
+            "delete_id": event["delete_id"]
         }))
 
     @sync_to_async
     def get_receiver(self, receiver_id):
-        try:
-            return User.objects.get(id=receiver_id)
-        except User.DoesNotExist:
-            return None
+        return User.objects.get(id=receiver_id)
 
     @sync_to_async
     def save_message(self, sender, receiver, message):
