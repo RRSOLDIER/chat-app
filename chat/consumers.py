@@ -28,7 +28,7 @@ class OnlineStatusConsumer(AsyncWebsocketConsumer):
 
         await self.accept()
 
-
+        # ✅ BROADCAST ONLINE
         await self.channel_layer.group_send(
             self.group_name,
             {
@@ -47,47 +47,23 @@ class OnlineStatusConsumer(AsyncWebsocketConsumer):
         user.is_online = False
         await sync_to_async(user.save)()
 
+        # ✅ BROADCAST OFFLINE
+        await self.channel_layer.group_send(
+            self.group_name,
+            {
+                "type": "user_status",
+                "user_id": user.id,
+                "status": "offline"
+            }
+        )
 
-        if hasattr(self, "group_name"):
-
-            await self.channel_layer.group_send(
-                self.group_name,
-                {
-                    "type": "user_status",
-                    "user_id": user.id,
-                    "status": "offline"
-                }
-            )
-
-            await self.channel_layer.group_discard(
-                self.group_name,
-                self.channel_name
-            )
+        await self.channel_layer.group_discard(
+            self.group_name,
+            self.channel_name
+        )
 
     async def user_status(self, event):
         await self.send(text_data=json.dumps(event))
-
-
-    async def disconnect(self, close_code):
-        user = self.scope['user']
-
-        if not user.is_anonymous:
-            user.is_online = False
-            await sync_to_async(user.save)()
-
-
-            await self.channel_layer.group_send(
-                self.group_name,
-                {
-                    "type": "user_status",
-                    "user_id": user.id,
-                    "status": "offline"
-                }
-            )
-
-    async def user_status(self, event):
-        await self.send(text_data=json.dumps(event))
-
 
 
 class ChatConsumer(AsyncWebsocketConsumer):
@@ -120,9 +96,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         data = json.loads(text_data)
         sender = self.scope["user"]
 
-        # ✅ TYPING INDICATOR
         if data.get("typing"):
-
             await self.channel_layer.group_send(
                 self.room_group_name,
                 {
@@ -132,9 +106,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
             )
             return
 
-        # ✅ DELETE MESSAGE
         if data.get("delete_id"):
-
             delete_id = data.get("delete_id")
 
             await self.delete_message(delete_id)
@@ -148,7 +120,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
             )
             return
 
-        # ✅ NORMAL MESSAGE
         message = data.get("message")
         receiver_id = data.get("receiver_id")
 
@@ -156,6 +127,9 @@ class ChatConsumer(AsyncWebsocketConsumer):
             return
 
         receiver = await self.get_receiver(receiver_id)
+
+        if not receiver:
+            return  # ✅ CRITICAL SAFETY
 
         msg_obj = await self.save_message(sender, receiver, message)
 
@@ -188,7 +162,10 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
     @sync_to_async
     def get_receiver(self, receiver_id):
-        return User.objects.get(id=receiver_id)
+        try:
+            return User.objects.get(id=receiver_id)
+        except User.DoesNotExist:
+            return None
 
     @sync_to_async
     def save_message(self, sender, receiver, message):
