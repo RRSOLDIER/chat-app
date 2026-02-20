@@ -114,18 +114,18 @@ const socket = new WebSocket(
     'ws://' + window.location.host + '/ws/chat/{{ room_name }}/'
 );
 
-/* ✅ AUTO SCROLL */
+
 function scrollToBottom() {
     chatBox.scrollTop = chatBox.scrollHeight;
 }
 scrollToBottom();
 
-/* ✅ RECEIVE EVENTS */
+
 socket.onmessage = function(e) {
 
     const data = JSON.parse(e.data);
 
-    /* ✅ Typing */
+
     if (data.typing) {
 
         if (data.sender !== "{{ request.user.username }}") {
@@ -137,7 +137,7 @@ socket.onmessage = function(e) {
         return;
     }
 
-    /* ✅ Delete */
+
     if (data.delete_id) {
 
         const msgDiv = document.getElementById("msg-" + data.delete_id);
@@ -147,7 +147,7 @@ socket.onmessage = function(e) {
         return;
     }
 
-    /* ✅ Normal Message */
+
     const isMe = data.sender === "{{ request.user.username }}";
 
     chatBox.innerHTML += `
@@ -162,7 +162,7 @@ socket.onmessage = function(e) {
     scrollToBottom();
 };
 
-/* ✅ SEND MESSAGE */
+
 function sendMessage() {
 
     const input = document.getElementById("message-input");
@@ -178,7 +178,7 @@ function sendMessage() {
     input.value = '';
 }
 
-/* ✅ DELETE MESSAGE */
+
 function deleteMessage(id) {
 
     socket.send(JSON.stringify({
@@ -186,7 +186,7 @@ function deleteMessage(id) {
     }));
 }
 
-/* ✅ TYPING DETECTOR */
+
 const inputField = document.getElementById("message-input");
 
 inputField.addEventListener("input", () => {

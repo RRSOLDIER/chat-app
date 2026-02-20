@@ -34,7 +34,7 @@ def chat_view(request, user_id):
     return render(request, 'chat.html', {
         'receiver': other_user,
         'room_name': room_name,
-        'messages': messages,   # ✅ CRITICAL FIX
+        'messages': messages,
     })
 
 def get_room_name(user1, user2):

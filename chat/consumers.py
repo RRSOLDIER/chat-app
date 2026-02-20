@@ -28,7 +28,7 @@ class OnlineStatusConsumer(AsyncWebsocketConsumer):
 
         await self.accept()
 
-        # ✅ BROADCAST ONLINE
+
         await self.channel_layer.group_send(
             self.group_name,
             {
@@ -47,7 +47,7 @@ class OnlineStatusConsumer(AsyncWebsocketConsumer):
         user.is_online = False
         await sync_to_async(user.save)()
 
-        # ✅ SAFE CHECK (CRITICAL FIX)
+
         if hasattr(self, "group_name"):
 
             await self.channel_layer.group_send(
@@ -75,7 +75,7 @@ class OnlineStatusConsumer(AsyncWebsocketConsumer):
             user.is_online = False
             await sync_to_async(user.save)()
 
-            # ✅ BROADCAST OFFLINE
+
             await self.channel_layer.group_send(
                 self.group_name,
                 {
@@ -125,7 +125,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
         sender = self.scope["user"]
 
-        # ✅ TYPING INDICATOR
+
         if typing:
             await self.channel_layer.group_send(
                 self.room_group_name,
@@ -136,7 +136,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
             )
             return
 
-        # ✅ DELETE MESSAGE
+
         if delete_id:
             await self.delete_message(delete_id)
 
@@ -149,7 +149,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
             )
             return
 
-        # ✅ NORMAL MESSAGE
+
         if not message:
             return
 

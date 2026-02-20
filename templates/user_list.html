@@ -94,12 +94,12 @@
 
 <script>
 
-/* ✅ ONLINE STATUS SOCKET */
+
 const onlineSocket = new WebSocket(
     'ws://' + window.location.host + '/ws/online/'
 );
 
-/* ✅ RECEIVE LIVE STATUS */
+
 onlineSocket.onmessage = function(e) {
 
     const data = JSON.parse(e.data);
